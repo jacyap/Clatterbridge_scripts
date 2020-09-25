@@ -1,0 +1,288 @@
+################################################################################
+## This macro file is used to run Geant4 simulations in batch mode.           ##
+##                                                                            ##
+## - Several settings are preset.                                             ##
+## - Comment/uncomment add/remove lines as required.                          ##
+## - Parallel simulations can be run, where "parallel" is taken to mean       ##
+##   several simulations running concurrently. If doing so, the "parallel"    ##
+##   version of the command to execute the gps.mac macro, /control/execute,   ##
+##   the command to set the seeds, /random/setSeeds, and the command to run   ##
+##   the simulation, /run/beamOn, should be uncommented.                      ##
+##   (Don't forget to comment the normal commands.)                           ##
+##                                                                            ##
+##    Author: 07/03/2018, M. Hentz                                            ##
+##		Edited, J. Yap 2019					      							  ##
+##                                                                            ##
+################################################################################
+
+
+#-------------------------------------------------------------------------------
+# Set verbosity
+#-------------------------------------------------------------------------------
+/control/verbose 0
+#/run/verbose 2
+/run/verbose 0
+/run/particle/verbose 0
+#/run/particle/dumpList
+/tracking/verbose 0
+
+
+#-------------------------------------------------------------------------------
+# Primary generator settings
+#-------------------------------------------------------------------------------
+# Choose how to generate primary particles and set required settings.
+#
+#   1) The macro gps.mac uses /gps/ commands to set desired energy
+#      distribution, mean energy, std dev, gun position, beam width,
+#      angular distribution.
+#
+#   2) Particles can be generated from a phase space file. The input
+#      should contain the following values separated by commas:
+#
+#        parentID, particleName, x, y, z, mom_x, mom_y, mom_z, ke
+#
+#      The positions (x, y, z) should be given in mm and the kinetic
+#      energy (ke) should be given in MeV. The format of the input
+#      file can be modified in FileReader.cc.
+#
+#      Note: parentID is redundant and is in fact ignored but it is
+#            simplest to include it anyway as this allows an output
+#            file from one simulation to be used as the input of
+#            another.
+#
+#      The path to the file used as an input is set with:
+#           - /primarygenerator/input path/to/file
+#
+#-------------------------------------------------------------------------------
+
+## Use macro to set properties of primaries
+#/control/execute gps.mac
+
+# Parallel version
+/control/execute ../../gps.mac
+
+## Reading from phase space file
+#/primarygenerator/input data/psf_z0_gen.txt
+#/primarygenerator/input path/input/psf_z81.txt
+
+# Set position in z particles are generated at
+/primarygenerator/generateAt 0
+#/primarygenerator/generateAt 81
+#/primarygenerator/generateAt 357
+#/primarygenerator/generateAt 1700
+
+
+#-------------------------------------------------------------------------------
+# Detector settings
+#-------------------------------------------------------------------------------
+# Choose where to record particles and set required settings.
+#
+#  1) 'all': record along the beamline at every position at intervals
+#            and overall distance specified below.
+#
+#     Set detector spacing and distance recorded below using:
+#         - /parallel/detector/spacing
+#         - /parallel/detector/distance
+#
+#     Also pass the parameters to the run action so output files
+#     are written correctly:
+#         - /user/run/detector/spacing
+#         - /user/run/detector/distance
+#
+#     Set the size of the vector of hits saved in the run action with:
+#         - /user/run/buffer
+#
+#     Once the vector reaches this size, hits are dumped to output.
+#     The ideal value for this will depend on the application. Making
+#     it too small results in large overhead from opening and closing
+#     files too often. Making it too large leads to too much memory
+#     being used. Both cases slow down the simulation considerably,
+#     so play around before submitting large runs and choose wisely!
+#
+#  1.a) 'detectorvolume': record all but in detectorvolume 
+#			- Useful for BP simulations
+#  		Select detectorvolume to record particles 
+#			- /parallel/detector detectorvolume 
+#		Uncomment and specify options for:
+#			- /parallel/detector/position 
+#			- /parallel/detector/spacing 
+#			- /parallel/detector/distance 
+#			- /user/run/detector/spacing 
+#			- /user/run/detector/distance 
+#     	Set the size of the vector of hits saved in the run action with:
+#           - /user/run/buffer
+# 		Set detector geometry and options under: 
+#			- /cb_sim/det/
+#
+#  2) <component>: record at the specified components.
+#
+#     Currently available keywords: - scatterfoil1 (at 81 mm)
+#                                   - tube1        (at 357 mm)
+#                                   - nozzle       (at 1700 mm)
+#                                   - outside      (at 1768 mm)
+#
+#     Component-position pairs can be added to the component map
+#     in ParallelWorldConstruction. The dump function in the run
+#     action needs to know if only one position is being recorded
+#     so switch on "single" mode and tell it where particles are
+#     recorded using:
+#         - /user/run/dump/single true
+#         - /user/run/detector/position
+#
+#-------------------------------------------------------------------------------
+
+## Choose where particles are recorded
+#/parallel/detector all 	
+/parallel/detector detectorvolume      #JY#
+#/parallel/detector scatterfoil1
+#/parallel/detector tube1
+#/parallel/detector nozzle
+#/parallel/detector outside
+#/parallel/detector phantom
+#/parallel/detector film1
+#JY#/parallel/detector film1new
+#/parallel/detector film2
+#/parallel/detector film_integzone
+#/parallel/detector film6
+#/parallel/detector film4
+#/parallel/detector film8
+#/parallel/detector film5
+#/parallel/detector film7
+
+## If using 'all'
+#/parallel/detector/spacing 25 mm      # default is 25 mm #JY#
+#/parallel/detector/distance 1900 mm   # default is 1900 mm #JY#
+
+## If using 'detectorvolume' uncomment all here
+/parallel/detector/position 379 mm #JY#1829 mm #1860 mm  #middle of volume wrt to treatment beamline z    
+/parallel/detector/spacing 27 um #JY#0.1 mm      # slice size, default is 25 mm
+/parallel/detector/distance 27 um #JY#40 mm    # length of detector, for BP 40 mm is good
+/user/run/detector/spacing 27 #JY#0.1
+/user/run/detector/distance 27 #JY#40       # same as detector distance
+
+# Pass spacing and distance to run action
+#/user/run/detector/spacing 25 
+#/user/run/detector/distance 1900 
+
+# Set buffer size
+/user/run/buffer 5000 #JY#
+
+## If using a component, set dump mode and detector position
+#JY#/user/run/dump/single true
+#/user/run/detector/position 81
+#/user/run/detector/position 357
+#JY#/user/run/detector/position 380
+#/user/run/detector/position 449
+#/user/run/detector/position 676
+#/user/run/detector/position 846
+#/user/run/detector/position 1009
+#/user/run/detector/position 1557
+#/user/run/detector/position 1671
+#/user/run/detector/position 1871
+
+#-------------------------------------------------------------------------------
+# Stepping action settings
+#-------------------------------------------------------------------------------
+# Choose where to kill particles if required. This can be useful if
+# only a given section of the beamline needs to be simulated.
+#
+# To be safe and not accidentally interfere with the ongoing
+# simulation, this should ideally be done after the particles have
+# been recorded.
+#
+# Here, particles are killed 1 mm after being recorded.
+#
+#-------------------------------------------------------------------------------
+
+## Kill particles 1 mm after being recorded
+#/steppingAction/kill 82
+#/steppingAction/kill 358
+#/steppingAction/kill 1701
+#/steppingAction/kill 1769
+#/steppingAction/kill 500
+
+#-------------------------------------------------------------------------------
+# Set physics process
+#-------------------------------------------------------------------------------
+# Choose physics list and set range cuts.
+#
+# Cuts should be set such that they are no bigger than 10% of slice thickness.
+#-------------------------------------------------------------------------------
+
+## Choose physics list
+/cb_sim/phys/addPhysics QGSP_BIC_HP
+#/cb_sim/phys/addPhysics QGSP_BIC_EMY
+#/cb_sim/phys/addPhysics emlivermore
+#/cb_sim/phys/addPhysics empenelope
+
+## Production thresholds
+/cb_sim/phys/setCuts 0.1 mm
+#/cb_sim/phys/setGCut 1 um
+#/cb_sim/phys/setECut 1 um
+#/cb_sim/phys/setPCut 1 um
+
+
+#-------------------------------------------------------------------------------
+# Set detector geometry
+#-------------------------------------------------------------------------------
+/cb_sim/det/setMaterial PMMA #JY#Water
+/cb_sim/det/setPosition 0 0 -3820 mm #JY#-2371 mm #-2340 mm #wrt room ie -4200 - (detectorvolume position)
+/cb_sim/det/setSizeXY 40 mm
+/cb_sim/det/setSizeZ  27 um #JY#40 mm
+/cb_sim/det/setSliceSizeXY 40 mm
+/cb_sim/det/sliceNumber 1 #JY#400		#number of layers for edep calc needs to be less than det distance
+
+
+#-------------------------------------------------------------------------------
+# Initialize kernel
+#-------------------------------------------------------------------------------
+/run/initialize
+
+
+#-------------------------------------------------------------------------------
+# Activate sensitive detector
+#-------------------------------------------------------------------------------
+/hits/activate /sd/phaseSpace
+
+
+#-------------------------------------------------------------------------------
+# Set seeds for randon number generators
+#-------------------------------------------------------------------------------
+# If running simulations "in parallel", the variables seed1 and seed2 are set by
+# the submission script cb_parallel.sh.
+# Make sure to uncomment the corresponding line.
+#-------------------------------------------------------------------------------
+#/random/setSeeds 1 100
+
+# Parallel version
+/random/setSeeds ${seed1} ${seed2}
+
+
+#-------------------------------------------------------------------------------
+# Step limit
+#-------------------------------------------------------------------------------
+# Step limit shouls be set such that it is no bigger than 5% of slice thickness
+#-------------------------------------------------------------------------------
+/cb_sim/stepMax 0.1 mm #JY#
+
+#-------------------------------------------------------------------------------
+# Print to console
+#-------------------------------------------------------------------------------
+# Choose how often to print event number to console.
+#-------------------------------------------------------------------------------
+/cb_sim/event/printModulo 1000
+
+#-------------------------------------------------------------------------------
+# Run simulation
+#-------------------------------------------------------------------------------
+# Choose how many primaries should be simulated.
+#
+# If running simulations "in parallel", the variable nevents is set by
+# cb_parallel.sh. Make sure to uncomment the corresponding line. Check the
+# number of events matches the number of lines in the input file. If that is
+# not the case, you may get a segmentation fault.
+#-------------------------------------------------------------------------------
+/run/beamOn 5000
+
+# Parallel version with split input file
+#/run/beamOn ${nevents}
